@@ -40,24 +40,75 @@ void q_free(struct list_head *head)
 /* Insert an element at head of queue */
 bool q_insert_head(struct list_head *head, char *s)
 {
+    if (!head)
+        return false;
+
+    element_t *new_element = malloc(sizeof(element_t));
+    if (!new_element)
+        return false;
+
+    char *tmp = strdup(s);
+    if (!tmp) {
+        free(new_element);
+        return false;
+    }
+
+    new_element->value = tmp;
+    list_add(&new_element->list, head);
+
     return true;
 }
 
 /* Insert an element at tail of queue */
 bool q_insert_tail(struct list_head *head, char *s)
 {
+    if (!head)
+        return false;
+
+    element_t *new_element = malloc(sizeof(element_t));
+    if (!new_element)
+        return false;
+
+    char *tmp = strdup(s);
+    if (!tmp) {
+        free(new_element);
+        return false;
+    }
+
+    new_element->value = tmp;
+    list_add_tail(&new_element->list, head);
     return true;
 }
 
 /* Remove an element from head of queue */
 element_t *q_remove_head(struct list_head *head, char *sp, size_t bufsize)
 {
-    return NULL;
+    struct list_head *first = head->next;  // Get the first element
+    element_t *entry = list_entry(first, element_t, list);
+    list_del(first);
+
+    if (sp) {
+        strncpy(sp, entry->value, bufsize - 1);
+        sp[bufsize - 1] = '\0';
+    }
+
+    return entry;
 }
 
 /* Remove an element from tail of queue */
 element_t *q_remove_tail(struct list_head *head, char *sp, size_t bufsize)
 {
+    if (list_empty(head))
+        return NULL;
+
+    struct list_head *last = head->prev;  // Get the last element    
+    element_t *entry = list_entry(last, element_t, list);
+    list_del(last);
+
+    if (sp) {
+        strncpy(sp, entry->value, bufsize - 1);
+        sp[bufsize - 1] = '\0';
+    }
     return NULL;
 }
 
@@ -79,6 +130,24 @@ int q_size(struct list_head *head)
 bool q_delete_mid(struct list_head *head)
 {
     // https://leetcode.com/problems/delete-the-middle-node-of-a-linked-list/
+    if (head->next == head && head->prev == head) {
+        list_del(head);
+        return true;
+    }
+    if (head->next->next == head) {
+        list_del(head->next);
+        return true;
+    }
+
+    struct list_head *slow = head->next;
+    struct list_head *fast = head->next->next;
+    while (fast != head && fast->next != head) {
+        slow = slow->next;
+        fast = fast->next->next;
+    }
+    element_t *entry = list_entry(slow, element_t, list);
+    list_del(slow);
+    q_release_element(entry);
     return true;
 }
 
@@ -96,7 +165,22 @@ void q_swap(struct list_head *head)
 }
 
 /* Reverse elements in queue */
-void q_reverse(struct list_head *head) {}
+void q_reverse(struct list_head *head)
+{
+    if (head == NULL || list_empty(head))
+        return;
+
+    struct list_head *node = head;
+    struct list_head *prev = head->prev;
+    struct list_head *next = NULL;
+    do {
+        next = node->next;
+        node->next = prev;
+        node->prev = next;
+        prev = node;
+        node = next;
+    } while (node != head);
+}
 
 /* Reverse the nodes of the list k at a time */
 void q_reverseK(struct list_head *head, int k)
