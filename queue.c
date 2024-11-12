@@ -109,7 +109,7 @@ element_t *q_remove_tail(struct list_head *head, char *sp, size_t bufsize)
         strncpy(sp, entry->value, bufsize - 1);
         sp[bufsize - 1] = '\0';
     }
-    return NULL;
+    return entry;
 }
 
 /* Return number of elements in queue */
